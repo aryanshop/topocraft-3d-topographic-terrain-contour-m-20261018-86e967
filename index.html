@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TopoCraft: 3D Topographic Terrain & Contour Map Generator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo-area">
+            <svg class="logo-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M2 12l5-3 5 3 5-3 5 3v8l-5-3-5 3-5-3-5 3z"/>
+                <path d="M7 9v8"/><path d="M12 12v8"/><path d="M17 9v8"/>
+            </svg>
+            <h1>TopoCraft</h1>
+        </div>
+        <p class="tagline">Procedural Topography & 3D Elevation Studio</p>
+    </header>
+
+    <main class="app-layout">
+        <!-- Control Panel -->
+        <section class="control-panel" aria-label="Terrain Controls">
+            <div class="panel-section">
+                <h2>Terrain Generation</h2>
+                <div class="control-group">
+                    <label for="seedInput">Random Seed</label>
+                    <div class="seed-row">
+                        <input type="text" id="seedInput" value="Topo2024">
+                        <button id="randomSeedBtn" class="btn secondary">Randomize</button>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label for="roughnessRange">Roughness / Octaves: <span id="roughnessVal">4</span></label>
+                    <input type="range" id="roughnessRange" min="1" max="7" value="4">
+                </div>
+
+                <div class="control-group">
+                    <label for="scaleRange">Feature Scale: <span id="scaleVal">50</span></label>
+                    <input type="range" id="scaleRange" min="10" max="150" value="50">
+                </div>
+
+                <div class="control-group">
+                    <label for="upliftRange">Tectonic Uplift: <span id="upliftVal">1.2</span></label>
+                    <input type="range" id="upliftRange" min="0.5" max="2.5" step="0.1" value="1.2">
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h2>Cartography & Styling</h2>
+                <div class="control-group">
+                    <label for="paletteSelect">Color Palette</label>
+                    <select id="paletteSelect">
+                        <option value="topographic">Classic Topo (Green/Brown/Snow)</option>
+                        <option value="emerald">Emerald Isles</option>
+                        <option value="arid">Desert Mesa</option>
+                        <option value="monochrome">Monochrome Blueprint</option>
+                        <option value="cyberpunk">Neon Cyber</option>
+                    </select>
+                </div>
+
+                <div class="control-group">
+                    <label for="seaLevelRange">Sea Level: <span id="seaLevelVal">30</span>%</label>
+                    <input type="range" id="seaLevelRange" min="0" max="80" value="30">
+                </div>
+
+                <div class="control-group">
+                    <label for="contourStepRange">Contour Interval: <span id="contourStepVal">10</span>m</label>
+                    <input type="range" id="contourStepRange" min="5" max="25" value="10">
+                </div>
+            </div>
+
+            <div class="panel-section">
+                <h2>Actions & Export</h2>
+                <div class="action-buttons">
+                    <button id="generateBtn" class="btn primary">Generate Terrain</button>
+                    <button id="exportPngBtn" class="btn secondary">Export Map PNG</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Viewport Area -->
+        <section class="viewport-area">
+            <div class="viewport-tabs" role="tablist">
+                <button role="tab" aria-selected="true" data-view="contour" class="tab-btn active">Contour Map (2D)</button>
+                <button role="tab" aria-selected="false" data-view="isometric" class="tab-btn">Elevation Model (3D)</button>
+                <button role="tab" aria-selected="false" data-view="stats" class="tab-btn">Region Analytics</button>
+            </div>
+
+            <div class="canvas-container">
+                <div id="contourView" class="view-panel active">
+                    <canvas id="mapCanvas" width="600" height="600"></canvas>
+                    <div class="canvas-overlay-info">
+                        <span>Click canvas to inspect elevation & coordinates</span>
+                        <span id="inspectCoords">X: -, Y: -, Elev: -</span>
+                    </div>
+                </div>
+
+                <div id="isometricView" class="view-panel">
+                    <canvas id="isoCanvas" width="600" height="600"></canvas>
+                    <div class="canvas-overlay-info">
+                        <span>Simulated 3D Wireframe Relief</span>
+                        <span>Drag slider or click Generate for new angle</span>
+                    </div>
+                </div>
+
+                <div id="statsView" class="view-panel">
+                    <div class="stats-card">
+                        <h3>Region Geometrics & Ledger</h3>
+                        <div class="stats-grid">
+                            <div class="stat-box">
+                                <span class="stat-label">Max Elevation</span>
+                                <span class="stat-val" id="statMaxElev">-</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Min Elevation</span>
+                                <span class="stat-val" id="statMinElev">-</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Landmass Ratio</span>
+                                <span class="stat-val" id="statLandRatio">-</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-label">Estimated Peaks</span>
+                                <span class="stat-val" id="statPeaks">-</span>
+                            </div>
+                        </div>
+                        <div class="elevation-profile-container">
+                            <h4>Cross-Section Elevation Profile (West to East)</h4>
+                            <canvas id="profileCanvas" width="550" height="160"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="app-footer">
+        <p>TopoCraft &bull; Pure HTML5 Canvas & Vanilla JS Topographical Engine</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
